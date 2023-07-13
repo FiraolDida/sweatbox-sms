@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/automatic_sms"
+        android:title="Automatic SMS"
+        android:checkable="true"
+        android:actionLayout="@layout/menu_item_checkbox"/>
+
+    <item
+        android:id="@+id/send_now"
+        android:title="Send NOW" />
+
+    <item
+        android:id="@+id/refresh"
+        android:title="Refresh" />
+
+</menu>

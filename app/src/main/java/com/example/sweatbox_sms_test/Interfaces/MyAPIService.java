@@ -15,6 +15,18 @@ public interface MyAPIService {
     @GET("google-sheet/all")
     Call<List<UserModel>> getAll();
 
+    @GET("google-sheet/newlyRegisteredUsers")
+    Call<List<UserModel>> getNewlyRegisteredUsers();
+
+    @GET("google-sheet/renewedUsers")
+    Call<List<UserModel>> getRenewedUsers();
+
+    @GET("google-sheet/nearExpirationUsers")
+    Call<List<UserModel>> getNearExpirationUsers();
+
+    @GET("google-sheet/expiredUsers")
+    Call<List<UserModel>> getExpiredUsers();
+
     @POST("google-sheet")
     Call<JsonObject> updateUserStatus(@Body JsonObject jsonObject);
 }

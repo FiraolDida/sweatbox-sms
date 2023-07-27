@@ -1,5 +1,7 @@
 package com.example.sweatbox_sms_test.Utils;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,12 +10,12 @@ import android.util.Log;
 
 import com.example.sweatbox_sms_test.Interfaces.MyAPIService;
 import com.example.sweatbox_sms_test.Models.UserModel;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,12 +32,25 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_SMS_RECEIVED = "com.example.sweatbox_sms_test.ACTION_SMS_RECEIVED";
     private static final long DELAY_BETWEEN_MESSAGES = 15000;
     private static final String TAG = "SMSUtils";
-    //    private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
+//        private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
     private static final String API_URL = "https://sweatbox-backend-production.up.railway.app/api/"; // for prod
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String receivedAction = intent.getAction();
+        Log.d(TAG, "onReceive: nineAmAlarm: " + intent.getBooleanExtra("nineAmAlarm", false));
+        Log.d(TAG, "onReceive: threePmAlarm: " + intent.getBooleanExtra("threePmAlarm", false));
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+//        nineAmAlarm(context, alarmManager);
+//        threePmAlarm(context, alarmManager);
+        if (intent.getBooleanExtra("nineAmAlarm", false)) {
+            nineAmAlarm(context, alarmManager);
+        }
+
+        if (intent.getBooleanExtra("threePmAlarm", false)) {
+            threePmAlarm(context, alarmManager);
+        }
 
         if (receivedAction != null && receivedAction.equals(ACTION_SMS_RECEIVED)) {
             SmsManager smsManager = SmsManager.getDefault();
@@ -130,5 +145,31 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
                 Log.d(TAG, "updateUserStatus onFailure: " + t.getMessage());
             }
         });
+    }
+
+    private void nineAmAlarm(Context context, AlarmManager alarmManager) {
+        Intent intent = new Intent(context, SMSBroadcastReceiver.class);
+        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
+        intent.putExtra("nineAmAlarm", "true");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+
+        long nextAlarmTime = calendar.getTimeInMillis();
+        Log.d(TAG, "nineAmAlarm nextAlarmTime: " + nextAlarmTime + " " + calendar.getTime());
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAlarmTime, pendingIntent);
+    }
+
+    private void threePmAlarm(Context context, AlarmManager alarmManager) {
+        Intent intent = new Intent(context, SMSBroadcastReceiver.class);
+        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
+        intent.putExtra("threePmAlarm", "true");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+
+        long nextAlarmTime = calendar.getTimeInMillis();
+        Log.d(TAG, "threePmAlarm nextAlarmTime: " + nextAlarmTime + " " + calendar.getTime());
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAlarmTime, pendingIntent);
     }
 }

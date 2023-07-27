@@ -39,6 +39,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isAutomaticSMSChecked = true;
     private static final String TAG = "MainActivity";
     private static final long DELAY_BETWEEN_MESSAGES = 15000;
-    //    private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
+//        private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
     private static final String API_URL = "https://sweatbox-backend-production.up.railway.app/api/"; // for prod
 
     @Override
@@ -63,8 +64,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        scheduleSMSBroadcast(this);
-        scheduleSMSBroadcastTest(this, 0, 0);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        nineAmAlarm(alarmManager);
+        threePmAlarm(alarmManager);
 
         TabLayout tabLayout = findViewById(R.id.tabLayout);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -72,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("Sweatbox");
         toolbar.inflateMenu(R.menu.menu_main);
 
-//        select the first tab and render the respective fragment
+        // select the first tab and render the respective fragment
         tabLayout.selectTab(tabLayout.getTabAt(0));
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -123,8 +125,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        MenuItem automaticSMSItem = menu.findItem(R.id.automatic_sms);
-        automaticSMSItem.setChecked(isAutomaticSMSChecked);
         return true;
     }
 
@@ -132,15 +132,17 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int itemId = item.getItemId();
 
-        if (itemId == R.id.automatic_sms) {
-            isAutomaticSMSChecked = !item.isChecked();
-            item.setChecked(isAutomaticSMSChecked);
-
-            if (!isAutomaticSMSChecked) {
+        if (itemId == R.id.start_cancel_alarm) {
+            if (isAutomaticSMSChecked) {
+                item.setTitle("Start automatic SMS");
+                isAutomaticSMSChecked = !isAutomaticSMSChecked;
                 cancelSMSBroadcast(this);
             } else {
-//                scheduleSMSBroadcast(this);
-                showTimePickerDialog(this);
+                item.setTitle("Cancel automatic SMS");
+                isAutomaticSMSChecked = !isAutomaticSMSChecked;
+                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                nineAmAlarm(alarmManager);
+                threePmAlarm(alarmManager);
             }
             return true;
         } else if (itemId == R.id.send_now) {
@@ -174,24 +176,24 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void scheduleSMSBroadcast(Context context) {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, SMSBroadcastReceiver.class);
-        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE);
-        long triggerTime = System.currentTimeMillis();
-        Log.d(TAG, "scheduleSMSBroadcast: STARTED");
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, triggerTime, INTERVAL_FIFTEEN_MINUTES, pendingIntent);
-    }
-
     private void cancelSMSBroadcast(Context context) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, SMSBroadcastReceiver.class);
-        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE);
-        Log.d(TAG, "cancelSMSBroadcast: CANCELED");
-        alarmManager.cancel(pendingIntent);
-        pendingIntent.cancel();
+
+        // Cancel the nine AM alarm
+        Intent nineAmIntent = new Intent(this, SMSBroadcastReceiver.class);
+        nineAmIntent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
+        PendingIntent nineAmPendingIntent = PendingIntent.getBroadcast(this, 0, nineAmIntent, PendingIntent.FLAG_MUTABLE);
+        Log.d(TAG, "cancelSMSBroadcast: 9AM CANCELED");
+        alarmManager.cancel(nineAmPendingIntent);
+        nineAmPendingIntent.cancel();
+
+        // Cancel the three PM alarm
+        Intent threePmIntent = new Intent(this, SMSBroadcastReceiver.class);
+        threePmIntent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
+        PendingIntent threePmPendingIntent = PendingIntent.getBroadcast(this, 1, threePmIntent, PendingIntent.FLAG_MUTABLE);
+        Log.d(TAG, "cancelSMSBroadcast: 3PM CANCELED");
+        alarmManager.cancel(threePmPendingIntent);
+        threePmPendingIntent.cancel();
     }
 
     private void sendNow(SmsManager smsManager, MyAPIService myAPIService) {
@@ -270,65 +272,43 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showTimePickerDialog(Context context){
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                Log.d(TAG, "onTimeSet: " + hourOfDay + ":" + minute);
-                scheduleSMSBroadcastTest(context, hourOfDay, minute);
-            }
-        }, 0, 0, false);
-
-        timePickerDialog.show();
-    }
-
-    private void scheduleSMSBroadcastTest(Context context, int hourOfDay, int minute) {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, SMSBroadcastReceiver.class);
-        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE);
-
-        long triggerTime;
-
-        if (hourOfDay == 0 && minute == 0) {
-            Log.d(TAG, "hour and minute not set");
-            triggerTime = System.currentTimeMillis();
-            Log.d(TAG, "trigger time: " + triggerTime);
-        } else {
-            Log.d(TAG, "hour and minute set");
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(System.currentTimeMillis());
-            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            calendar.set(Calendar.MINUTE, minute);
-            triggerTime = calendar.getTimeInMillis();
-            Log.d(TAG, "trigger time: " + triggerTime);
-        }
-
-        Log.d(TAG, "scheduleSMSBroadcast: STARTED");
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, triggerTime, INTERVAL_FIFTEEN_MINUTES, pendingIntent);
-    }
-
     private void nineAmAlarm(AlarmManager alarmManager) {
         Intent intent = new Intent(this, SMSBroadcastReceiver.class);
+        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
+        intent.putExtra("nineAmAlarm", true);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 9);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
 
+        // If the current time is already past 9 AM, schedule the alarm for the next day
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
         long startTime = calendar.getTimeInMillis();
+        Log.d(TAG, "nineAmAlarm: " + startTime + " " + calendar.getTime());
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, startTime, pendingIntent);
     }
 
     private void threePmAlarm(AlarmManager alarmManager) {
         Intent intent = new Intent(this, SMSBroadcastReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE);
+        intent.setAction(SMSBroadcastReceiver.ACTION_SMS_RECEIVED);
+        intent.putExtra("threePmAlarm", true);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, intent, PendingIntent.FLAG_MUTABLE);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 15);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
 
+        // If the current time is already past 3 PM, schedule the alarm for the next day
+        if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
         long startTime = calendar.getTimeInMillis();
+        Log.d(TAG, "threePmAlarm: " + startTime + " " + calendar.getTime());
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, startTime, pendingIntent);
     }
 }

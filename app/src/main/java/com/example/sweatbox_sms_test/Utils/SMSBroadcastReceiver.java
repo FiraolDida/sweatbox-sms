@@ -32,8 +32,8 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_SMS_RECEIVED = "com.example.sweatbox_sms_test.ACTION_SMS_RECEIVED";
     private static final long DELAY_BETWEEN_MESSAGES = 15000;
     private static final String TAG = "SMSUtils";
-//        private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
-    private static final String API_URL = "https://sweatbox-backend-production.up.railway.app/api/"; // for prod
+//        private static final String API_URL = "http://10.0.2.2:3000/"; // for dev
+    private static final String API_URL = "https://sweatbox-express.vercel.app/"; // for prod
 
     @Override
     public void onReceive(Context context, Intent intent) {

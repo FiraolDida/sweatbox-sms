@@ -41,8 +41,8 @@ public class ExpiredFragment extends Fragment implements RefreshableFragment {
     private static final String TAG = "ExpiredFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-//    private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
-    private static final String API_URL = "https://sweatbox-backend-production.up.railway.app/api/"; // for prod
+//    private static final String API_URL = "http://10.0.2.2:3000/"; // for dev
+    private static final String API_URL = "https://sweatbox-express.vercel.app/"; // for prod
 
     // TODO: Rename and change types of parameters
     private String mParam1;

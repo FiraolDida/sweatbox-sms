@@ -56,8 +56,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isAutomaticSMSChecked = true;
     private static final String TAG = "MainActivity";
     private static final long DELAY_BETWEEN_MESSAGES = 15000;
-//        private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
-    private static final String API_URL = "https://sweatbox-backend-production.up.railway.app/api/"; // for prod
+//        private static final String API_URL = "http://10.0.2.2:3000/"; // for dev
+    private static final String API_URL = "https://sweatbox-express.vercel.app/"; // for prod
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

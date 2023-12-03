@@ -41,8 +41,8 @@ public class NewlyRegisteredFragment extends Fragment implements RefreshableFrag
     private static final String TAG = "NewlyRegisteredFragment";
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-//        private static final String API_URL = "http://10.0.2.2:8000/api/"; // for dev
-    private static final String API_URL = "https://sweatbox-backend-production.up.railway.app/api/";
+//        private static final String API_URL = "http://10.0.2.2:3000/"; // for dev
+    private static final String API_URL = "https://sweatbox-express.vercel.app/";
 
     // TODO: Rename and change types of parameters
     private String mParam1;
